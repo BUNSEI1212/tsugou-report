@@ -13,7 +13,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# 六类差异（CodeReviewer 定义的清单，原型阶段先落地其中稳定部分）
+# 差异类型清单（原型阶段先落地其中稳定部分）
 DIFF_AMOUNT_MISMATCH = "金额不符"
 DIFF_MISSING_ROW = "缺失行"
 DIFF_EXTRA_ROW = "多余行"
@@ -83,7 +83,7 @@ class RuleRecord:
     amount: float | None = None
 
 
-# 金额变动阈值（Chief 定版，三档口径）：
+# 金额变动阈值（三档口径）：
 #   1. 变动金额 > 10,000 日元          -> 退回重看，不看百分比（挡大额漏收）
 #   2. 否则，幅度 > 20% 且变动 > 1,000 -> 退回重看（挡小额被比例放大）
 #   3. 其余                            -> 不打扰（小额日常波动）
@@ -143,7 +143,7 @@ class Rulebook:
 
         指纹不含金额是为了让规则能跨月命中，但命中之后必须再比一次金额：
         「上次 1,830 被认可」不等于「这次 183,000 也可以」。
-        这一层是 CodeReviewer 指出的假正常场景，不能省。
+        这一层是必须防住的假正常场景，不能省。
 
         金额缺失时不静默沿用，而是报错：
         以前这里 return last.verdict，调用方漏传参数也不会有任何提示，
@@ -163,7 +163,7 @@ class Rulebook:
             )
         if last.amount is None:
             # 旧版规则簿没有金额基准（升级前的记录）。
-            # 按 Chief 定的口径：一律当作「上次金额不明」退回需确认，
+            # 口径：一律当作「上次金额不明」退回需确认，
             # 绝不跳过阈值检查 —— 放过一次 183,000 的代价，和多问一次不对等。
             # 也不能把默认值填 0：那会让所有旧规则集体退回，看起来像规则簿坏了。
             self.last_unknown_reason = REASON_AMOUNT_UNKNOWN

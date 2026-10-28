@@ -1,5 +1,17 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# 客户规则簿：含客户经营数据，属客户资产，永不入库
+rules/
+*.rulebook.json
+
+# 生成物
 out/*.png
 !out/演示用_突合レポート_2026-10.png
+
+# 商务材料与外部资料，即使误放到本目录也不该公开
+../recon-report-private/
+../_listwork/
+archive/
+assets/

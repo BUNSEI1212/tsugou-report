@@ -75,7 +75,7 @@ class DiffStatus(str, Enum):
     - 金额超阈值 -> last_verdict 返回 None -> NEW
     - 金额在阈值内 -> 数值没变，谈不上「与上次判定不符」
     两条路径都到不了它。对外挂一个永远不出现的状态，等于卖不存在的东西，
-    所以删除。这是 Researcher 推出来的，Chief 定为硬性要求：跑不出来就改三态。
+    以以删除。硬性要求：跑不出来就改三态。
     """
 
     NEW = "需确认"
@@ -92,7 +92,7 @@ class Diff:
     """一条差异。
 
     fingerprint 由「情境」决定，必须包含能区分同一种情况的具体数值，
-    否则一次确认会泛化到该客户该品目的所有同类差异，掩盖后续真错单。
+    否则一次确认会泛化到该客户该品目的以有同类差异，掩盖后续真错单。
     """
 
     diff_type: str
@@ -151,14 +151,14 @@ def _fp(*parts: object) -> str:
 #   半角括号 ) vs 全角 ）
 #   「鈴木 次郎」vs「鈴木　次郎」(全角空格)
 # NFKC 会把全角数字/括号/空格统一成半角，但不能处理「介護」和「介护」
-# 这类繁简差异，也不能处理中间的空格，所以还要额外收口。
+# 这类繁简差异，也不能处理中间的空格，以以还要额外收口。
 
 # 这些写法差异在业务上是同一个东西，归一化后应当相等
 _TRAILING_HONORIFIC = re.compile(r"(様|さま|さん|殿)$")
 
 
 def norm_name(s: str) -> str:
-    """利用者名归一化：全半角统一、去所有空白、去敬称。"""
+    """利用者名归一化：全半角统一、去以有空白、去敬称。"""
     if not s:
         return ""
     t = unicodedata.normalize("NFKC", s)
@@ -168,7 +168,7 @@ def norm_name(s: str) -> str:
 
 
 def norm_item(s: str) -> str:
-    """品目名归一化：全半角统一、去所有空白。
+    """品目名归一化：全半角统一、去以有空白。
 
     只做「写法」归一，不做语义映射——「身体介護1」和「身体介護2」
     是不同的品目，绝不能合并。
@@ -181,7 +181,7 @@ def norm_item(s: str) -> str:
 
 
 def item_key(customer_name: str, item_name: str) -> tuple[str, str]:
-    """归一化后的 (利用者, 品目) 键，所有比对都用它。"""
+    """归一化后的 (利用者, 品目) 键，以有比对都用它。"""
     return (norm_name(customer_name), norm_item(item_name))
 
 
@@ -209,13 +209,13 @@ def load_contract_rates(path: str | Path) -> list[ContractRate]:
 
     同一 (利用者名, 品目) 出现多行时必须报错：
     - 真实合同常按生效日分段（改单价很常见），带 effective_from 且生效日互不相同是合法的，
-      此时保留所有分段，由 resolve_rate 按服务日取对应单价。
+      此时保留以有分段，由 resolve_rate 按服务日取对应单价。
     - 完全没有 effective_from 时出现重复，说明数据有歧义，报错让客户补生效日，
       绝不静默覆盖。
     - 生效日完全相同，说明同一时点有两个价，同样报错。
 
     关于「分段重叠」：按生效日分段的语义本来就是「从该日起生效，直到下一段」，
-    所以区间天然是首尾相接而非互相独立，「重叠」本身是正常业务（涨价、后来又改回去）。
+    以以区间天然是首尾相接而非互相独立，「重叠」本身是正常业务（涨价、后来又改回去）。
     真正会替客户选价而不报错的情况只有两种，都已拦下：
     ① 同一生效日出现两次（无法确定谁先谁后）
     ② 完全没有生效日却有多行（无法排序）
@@ -273,7 +273,7 @@ class RateStatus(str, Enum):
 
     FOUND = "取到单价"
     NO_CONTRACT = "合同无此品目"
-    BEFORE_ALL = "服务日早于所有分段"
+    BEFORE_ALL = "服务日早于以有分段"
     AMBIGUOUS = "无法唯一确定分段"
 
 
@@ -307,7 +307,7 @@ def resolve_rate(
     四种结果必须区分开，否则会静默跳过该最该报的错：
     - FOUND        取到单价
     - NO_CONTRACT  合同里根本没这个 (利用者, 品目)
-    - BEFORE_ALL   服务日早于该品目所有分段（客户拿旧期间数据套了新合同）-> 要报
+    - BEFORE_ALL   服务日早于该品目以有分段（客户拿旧期间数据套了新合同）-> 要报
     - AMBIGUOUS    无日期或有日期但无法唯一确定分段 -> 交给警告
     """
     segs = index.get(item_key(customer, item))
@@ -326,7 +326,7 @@ def resolve_rate(
         else:
             break
     if chosen is None:
-        # 服务日早于所有分段的生效日 —— 这是错，不是数据质量问题
+        # 服务日早于以有分段的生效日 —— 这是错，不是数据质量问题
         earliest = min((s.effective_from for s in segs if s.effective_from), default="")
         return RateLookup(RateStatus.BEFORE_ALL, earliest_from=earliest)
     return RateLookup(RateStatus.FOUND, chosen.unit_price)
@@ -359,7 +359,7 @@ def load_plan_with_display(
 
 
 def _period_of(iso_date: str) -> str | None:
-    """返回日期所属 YYYY-MM；空串或无法解析返回 None。"""
+    """返回日期以属 YYYY-MM；空串或无法解析返回 None。"""
     if not iso_date:
         return None
     try:
@@ -381,7 +381,7 @@ def reconcile(
     返回 (差异列表, 警告列表)。plan 为 None 时不判缺失行，并在 warnings 里说明，
     绝不拿合同全量造出假的缺失行。
 
-    注意：所有键比对都走 item_key() 归一化（全半角、空白、敬称），
+    注意：以有键比对都走 item_key() 归一化（全半角、空白、敬称），
     否则「身体介護1」vs「身体介護１」会被误判成缺失行 + 多余行两条。
     """
     diffs: list[Diff] = []
@@ -414,7 +414,7 @@ def reconcile(
                 )
             )
         elif lookup.status is RateStatus.BEFORE_ALL:
-            # 第 7 类的一种子原因：合同里**有这个品目**，但服务日早于所有分段的生效日，
+            # 第 7 类的一种子原因：合同里**有这个品目**，但服务日早于以有分段的生效日，
             # 典型情形是客户拿旧期间数据套了新合同。与「合同里根本没这个品目」区分开：
             # 前者一定是错，后者可能正常（合同外服务）。
             # 对外口径仍是 8 类（见 rulebook.ALL_DIFF_TYPES），此处 diff_type 用独立常量
@@ -630,7 +630,7 @@ def reconcile(
 def _classify(last_verdict: str) -> DiffStatus:
     """命中历史规则时的判定。
 
-    指纹已经带了具体数值，所以能命中就意味着「同一个点、数值也一样」。
+    指纹已经带了具体数值，以以能命中就意味着「同一个点、数值也一样」。
     - 上次「采纳建议值」→ 上个月这个错被改掉了，本次同样的错原样又出现，
       这是「同一个错误在犯第二次」，标 RECURRING（上次已改，本次再现）。
       不能说成「与上次判定不符」—— 客户会以为是自己改了主意。
