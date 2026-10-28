@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.DS_Store
+out/*.png
+!out/演示用_突合レポート_2026-10.png
